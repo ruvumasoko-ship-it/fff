@@ -1,61 +1,54 @@
 // ==================== AUTHENTICATION FUNCTIONS ====================
 
-// Show Login Form
+function getTranslation(key) {
+    return translations[currentLang][key] || key;
+}
+
 window.showLoginForm = function() {
     console.log("Showing login form");
     document.getElementById('loginCard').style.display = 'block';
     document.getElementById('registerCard').style.display = 'none';
-    
     document.getElementById('loginNavBtn').classList.add('active');
     document.getElementById('registerNavBtn').classList.remove('active');
-    
     document.getElementById('loginError').style.display = 'none';
 };
 
-// Show Register Form
 window.showRegisterForm = function() {
     console.log("Showing register form");
     document.getElementById('loginCard').style.display = 'none';
     document.getElementById('registerCard').style.display = 'block';
-    
     document.getElementById('registerNavBtn').classList.add('active');
     document.getElementById('loginNavBtn').classList.remove('active');
-    
     document.getElementById('registerError').style.display = 'none';
     document.getElementById('registerSuccess').style.display = 'none';
 };
 
-// Login User
 window.loginUser = async function() {
-    console.log("Login function called");
-    
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
     const errorDiv = document.getElementById('loginError');
-    
     errorDiv.style.display = 'none';
     
     if (!email || !password) {
-        errorDiv.querySelector('span').innerText = 'Please enter email and password';
+        errorDiv.querySelector('span').innerText = getTranslation('pleaseEnterEmailPassword');
         errorDiv.style.display = 'flex';
         return;
     }
     
     try {
-        const userCredential = await auth.signInWithEmailAndPassword(email, password);
-        console.log("Login successful:", userCredential.user.email);
+        await auth.signInWithEmailAndPassword(email, password);
+        console.log("Login successful");
     } catch (error) {
-        console.error("Login error:", error.code);
         let message = '';
         switch(error.code) {
             case 'auth/user-not-found':
-                message = 'No account found. Please register first.';
+                message = getTranslation('noAccountFound');
                 break;
             case 'auth/wrong-password':
-                message = 'Incorrect password. Try again.';
+                message = getTranslation('incorrectPassword');
                 break;
             case 'auth/invalid-email':
-                message = 'Invalid email address.';
+                message = getTranslation('invalidEmail');
                 break;
             default:
                 message = error.message;
@@ -65,10 +58,7 @@ window.loginUser = async function() {
     }
 };
 
-// Register User
 window.registerUser = async function() {
-    console.log("Register function called");
-    
     const fullName = document.getElementById('regFullName').value.trim();
     const email = document.getElementById('regEmail').value.trim();
     const password = document.getElementById('regPassword').value;
@@ -80,13 +70,17 @@ window.registerUser = async function() {
     successDiv.style.display = 'none';
     
     if (!fullName || !email || !password) {
-        errorDiv.querySelector('span').innerText = 'Please fill all required fields';
+        errorDiv.querySelector('span').innerText = getTranslation('pleaseFillFields');
         errorDiv.style.display = 'flex';
         return;
     }
-    
     if (password.length < 6) {
-        errorDiv.querySelector('span').innerText = 'Password must be at least 6 characters';
+        errorDiv.querySelector('span').innerText = getTranslation('passwordMinLength');
+        errorDiv.style.display = 'flex';
+        return;
+    }
+    if (!email.includes('@')) {
+        errorDiv.querySelector('span').innerText = getTranslation('invalidEmail');
         errorDiv.style.display = 'flex';
         return;
     }
@@ -94,35 +88,26 @@ window.registerUser = async function() {
     try {
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
         const user = userCredential.user;
-        
         await db.collection('users').doc(user.uid).set({
-            fullName: fullName,
-            email: email,
-            phone: phone || '',
+            fullName: fullName, email: email, phone: phone || '',
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            totalCalculations: 0,
-            totalProfit: 0,
-            totalLoans: 0,
+            totalCalculations: 0, totalProfit: 0, totalLoans: 0,
             lastLogin: firebase.firestore.FieldValue.serverTimestamp()
         });
-        
         await user.updateProfile({ displayName: fullName });
-        
-        successDiv.querySelector('span').innerText = 'Account created successfully! Logging you in...';
+        successDiv.querySelector('span').innerText = getTranslation('accountCreated');
         successDiv.style.display = 'flex';
-        
     } catch (error) {
-        console.error("Register error:", error.code);
         let message = '';
         switch(error.code) {
             case 'auth/email-already-in-use':
-                message = 'Email already in use. Please login instead.';
+                message = getTranslation('emailInUse');
                 break;
             case 'auth/invalid-email':
-                message = 'Invalid email address.';
+                message = getTranslation('invalidEmail');
                 break;
             case 'auth/weak-password':
-                message = 'Password too weak. Use at least 6 characters.';
+                message = getTranslation('weakPassword');
                 break;
             default:
                 message = error.message;
@@ -132,13 +117,58 @@ window.registerUser = async function() {
     }
 };
 
-// Logout User
 window.logoutUser = async function() {
-    console.log("Logout function called");
     try {
         await auth.signOut();
     } catch (error) {
         console.error("Logout error:", error);
-        alert('Error logging out. Please try again.');
+        alert(error.message);
+    }
+};
+
+window.googleSignIn = async function() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    try {
+        const result = await auth.signInWithPopup(provider);
+        const user = result.user;
+        const userRef = db.collection('users').doc(user.uid);
+        const userDoc = await userRef.get();
+        if (!userDoc.exists) {
+            await userRef.set({
+                fullName: user.displayName || user.email.split('@')[0],
+                email: user.email,
+                phone: user.phoneNumber || '',
+                photoURL: user.photoURL || '',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                totalCalculations: 0, totalProfit: 0, totalLoans: 0,
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        } else {
+            await userRef.update({ lastLogin: firebase.firestore.FieldValue.serverTimestamp() });
+        }
+    } catch (error) {
+        const errorDiv = document.getElementById('loginError');
+        errorDiv.querySelector('span').innerText = error.message;
+        errorDiv.style.display = 'flex';
+    }
+};
+
+window.forgotPassword = async function() {
+    const email = document.getElementById('loginEmail').value.trim();
+    if (!email) {
+        const errorDiv = document.getElementById('loginError');
+        errorDiv.querySelector('span').innerText = getTranslation('enterEmailFirst');
+        errorDiv.style.display = 'flex';
+        return;
+    }
+    try {
+        await auth.sendPasswordResetEmail(email);
+        alert(getTranslation('resetEmailSent'));
+    } catch (error) {
+        const errorDiv = document.getElementById('loginError');
+        let message = error.code === 'auth/user-not-found' ? getTranslation('noAccountFound') : error.message;
+        errorDiv.querySelector('span').innerText = message;
+        errorDiv.style.display = 'flex';
     }
 };

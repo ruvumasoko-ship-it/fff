@@ -245,6 +245,11 @@ auth.onAuthStateChanged(async (user) => {
         currentUser = null;
         document.getElementById('authSection').style.display = 'block';
         document.getElementById('dashboardSection').style.display = 'none';
-        showLoginForm();
+        // FIXED: Changed showLogin to showLoginForm
+        if (typeof showLoginForm === 'function') {
+            showLoginForm();
+        } else {
+            console.log("showLoginForm not defined yet");
+        }
     }
 });

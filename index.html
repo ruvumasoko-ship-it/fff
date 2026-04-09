@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Biashara Rahisi - Ingia au Jisajili</title>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- CSS Custom -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Background Image Overlay -->
+    <div class="bg-overlay"></div>
+    
+    <div class="container">
+        <!-- AUTH SECTION (Login/Register) -->
+        <div id="authSection">
+            <div class="auth-container">
+                <!-- Top Navigation Bar -->
+                <div class="top-nav">
+                    <div class="nav-left">
+                        <span class="repair-status">
+                            <i class="fas fa-circle" style="color: #2ecc71; font-size: 8px;"></i> Repair Status
+                        </span>
+                    </div>
+                    <div class="nav-right">
+                        <a href="#" class="nav-link" id="loginNavBtn" onclick="showLogin()">Login</a>
+                        <a href="#" class="nav-link" id="registerNavBtn" onclick="showRegister()">Register</a>
+                        <a href="#" class="nav-link">Pricing</a>
+                        <a href="#" class="nav-link">English <i class="fas fa-chevron-down"></i></a>
+                    </div>
+                </div>
+                
+                <!-- Login Card -->
+                <div class="auth-card" id="loginCard">
+                    <div class="welcome-text">
+                        <h1>Welcome Back</h1>
+                        <p>Login to your Biashara Rahisi</p>
+                    </div>
+                    
+                    <div id="loginError" class="error-msg" style="display: none;">
+                        <i class="fas fa-exclamation-circle"></i> <span></span>
+                    </div>
+                    
+                    <div class="input-group">
+                        <div class="input-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <input type="text" id="loginEmail" placeholder="Username / Email">
+                    </div>
+                    
+                    <div class="input-group">
+                        <div class="input-icon">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <input type="password" id="loginPassword" placeholder="Password">
+                    </div>
+                    
+                    <div class="remember-group">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="rememberMe">
+                            <span class="checkmark"></span>
+                            Remember Me
+                        </label>
+                    </div>
+                    
+                    <button class="btn-login" onclick="login()">
+                        Login <i class="fas fa-arrow-right"></i>
+                    </button>
+                    
+                    <div class="register-link">
+                        Not yet registered? <a href="#" onclick="showRegister()">Register Now</a>
+                    </div>
+                </div>
+                
+                <!-- Register Card (Hidden by default) -->
+                <div class="auth-card" id="registerCard" style="display: none;">
+                    <div class="welcome-text">
+                        <h1>Create Account</h1>
+                        <p>Join Biashara Rahisi today</p>
+                    </div>
+                    
+                    <div id="registerError" class="error-msg" style="display: none;">
+                        <i class="fas fa-exclamation-circle"></i> <span></span>
+                    </div>
+                    <div id="registerSuccess" class="success-msg" style="display: none;">
+                        <i class="fas fa-check-circle"></i> <span></span>
+                    </div>
+                    
+                    <div class="input-group">
+                        <div class="input-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <input type="text" id="regFullName" placeholder="Full Name">
+                    </div>
+                    
+                    <div class="input-group">
+                        <div class="input-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <input type="email" id="regEmail" placeholder="Email Address">
+                    </div>
+                    
+                    <div class="input-group">
+                        <div class="input-icon">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <input type="password" id="regPassword" placeholder="Password (min. 6 characters)">
+                    </div>
+                    
+                    <div class="input-group">
+                        <div class="input-icon">
+                            <i class="fas fa-phone"></i>
+                        </div>
+                        <input type="tel" id="regPhone" placeholder="Phone Number (Optional)">
+                    </div>
+                    
+                    <button class="btn-login" onclick="register()">
+                        Register <i class="fas fa-user-plus"></i>
+                    </button>
+                    
+                    <div class="register-link">
+                        Already have an account? <a href="#" onclick="showLogin()">Login Here</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- DASHBOARD SECTION (After login) -->
+        <div id="dashboardSection" style="display: none;">
+            <!-- Header -->
+            <div class="dashboard-header">
+                <div class="logo-area">
+                    <i class="fas fa-chart-line"></i>
+                    <h2>Biashara Rahisi</h2>
+                </div>
+                <div class="user-area">
+                    <div class="user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <span id="userName"></span>
+                    </div>
+                    <button class="logout-btn" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <i class="fas fa-calculator"></i>
+                    <div class="stat-info">
+                        <h3 id="totalCalculations">0</h3>
+                        <p>Total Calculations</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-chart-line"></i>
+                    <div class="stat-info">
+                        <h3 id="totalProfit">0</h3>
+                        <p>Total Profit (TZS)</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-handshake"></i>
+                    <div class="stat-info">
+                        <h3 id="totalLoans">0</h3>
+                        <p>Loan Calculations</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Dashboard Grid -->
+            <div class="dashboard-grid">
+                <!-- Calculator 1: Profit/Loss -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-simple"></i>
+                        <h3>Calculate Profit / Loss</h3>
+                    </div>
+                    
+                    <div class="input-row">
+                        <label><i class="fas fa-money-bill-wave"></i> Total Revenue (TZS)</label>
+                        <input type="number" id="dashboardMapato" placeholder="e.g., 500000" value="0">
+                    </div>
+                    
+                    <div class="input-row">
+                        <label><i class="fas fa-receipt"></i> Total Expenses (TZS)</label>
+                        <input type="number" id="dashboardGharama" placeholder="e.g., 350000" value="0">
+                    </div>
+                    
+                    <div class="result-box" id="dashboardProfitResult">
+                        <i class="fas fa-chart-line"></i>
+                        <div class="result-label">Your Result</div>
+                        <div class="big-number" id="dashboardFaidaValue">TZS 0</div>
+                    </div>
+                    
+                    <button class="btn-save" onclick="saveProfitCalculation()">
+                        <i class="fas fa-save"></i> Save Calculation
+                    </button>
+                </div>
+                
+                <!-- Calculator 2: Loan -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-building-columns"></i>
+                        <h3>Calculate Loan & Interest</h3>
+                    </div>
+                    
+                    <div class="input-row">
+                        <label><i class="fas fa-coins"></i> Loan Amount (TZS)</label>
+                        <input type="number" id="dashboardLoanAmount" placeholder="e.g., 1000000" value="0">
+                    </div>
+                    
+                    <div class="input-row">
+                        <label><i class="fas fa-percent"></i> Monthly Interest Rate (%)</label>
+                        <input type="number" id="dashboardInterestRate" placeholder="e.g., 5" value="5" step="0.5">
+                    </div>
+                    
+                    <div class="input-row">
+                        <label><i class="fas fa-calendar"></i> Repayment Period (Months)</label>
+                        <input type="number" id="dashboardLoanMonths" placeholder="e.g., 6" value="6">
+                    </div>
+                    
+                    <div class="result-box">
+                        <i class="fas fa-calculator"></i>
+                        <div class="result-label">Monthly Payment</div>
+                        <div class="big-number" id="dashboardMonthlyPayment">TZS 0</div>
+                        <div class="small-text" id="dashboardTotalPayment"></div>
+                    </div>
+                    
+                    <button class="btn-save" onclick="saveLoanCalculation()">
+                        <i class="fas fa-save"></i> Save Calculation
+                    </button>
+                </div>
+                
+                <!-- Activities -->
+                <div class="card activities-card">
+                    <div class="card-header">
+                        <i class="fas fa-clock-rotate-left"></i>
+                        <h3>Recent Activities</h3>
+                    </div>
+                    
+                    <div id="activitiesList" class="activities-list">
+                        <div class="empty-state">
+                            <i class="fas fa-folder-open"></i>
+                            <p>No activities yet. Start calculating!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript Files -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

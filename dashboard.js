@@ -1,27 +1,23 @@
 // ==================== DASHBOARD FUNCTIONS ====================
 
 let currentUser = null;
-let totalProfitSum = 0;
-let totalLoanCount = 0;
 
-// Update profit calculation in real-time
-function updateDashboardProfit() {
-    const mapato = parseFloat(document.getElementById('dashboardMapato').value) || 0;
-    const gharama = parseFloat(document.getElementById('dashboardGharama').value) || 0;
-    const faida = mapato - gharama;
+// Update profit display
+function updateProfitDisplay() {
+    const revenue = parseFloat(document.getElementById('dashboardMapato').value) || 0;
+    const expenses = parseFloat(document.getElementById('dashboardGharama').value) || 0;
+    const profit = revenue - expenses;
     const element = document.getElementById('dashboardFaidaValue');
     
-    if (faida >= 0) {
-        element.innerHTML = `TZS ${faida.toLocaleString()} (Profit)`;
-        element.style.color = "#ffffff";
+    if (profit >= 0) {
+        element.innerHTML = `TZS ${profit.toLocaleString()} (Profit)`;
     } else {
-        element.innerHTML = `TZS ${Math.abs(faida).toLocaleString()} (Loss)`;
-        element.style.color = "#ffcccc";
+        element.innerHTML = `TZS ${Math.abs(profit).toLocaleString()} (Loss)`;
     }
 }
 
-// Update loan calculation in real-time
-function updateDashboardLoan() {
+// Update loan display
+function updateLoanDisplay() {
     const amount = parseFloat(document.getElementById('dashboardLoanAmount').value) || 0;
     const rate = parseFloat(document.getElementById('dashboardInterestRate').value) || 0;
     const months = parseFloat(document.getElementById('dashboardLoanMonths').value) || 1;
@@ -40,7 +36,7 @@ function updateDashboardLoan() {
     }
     
     document.getElementById('dashboardMonthlyPayment').innerHTML = `TZS ${Math.round(monthlyPayment).toLocaleString()}`;
-    document.getElementById('dashboardTotalPayment').innerHTML = `Total Repayment: TZS ${Math.round(totalPayment).toLocaleString()}`;
+    document.getElementById('dashboardTotalPayment').innerHTML = `Total: TZS ${Math.round(totalPayment).toLocaleString()}`;
 }
 
 // Save Profit Calculation
@@ -50,17 +46,17 @@ window.saveProfitCalculation = async function() {
         return;
     }
     
-    const mapato = parseFloat(document.getElementById('dashboardMapato').value) || 0;
-    const gharama = parseFloat(document.getElementById('dashboardGharama').value) || 0;
-    const faida = mapato - gharama;
+    const revenue = parseFloat(document.getElementById('dashboardMapato').value) || 0;
+    const expenses = parseFloat(document.getElementById('dashboardGharama').value) || 0;
+    const profit = revenue - expenses;
     
     const calculationData = {
         userId: currentUser.uid,
         userEmail: currentUser.email,
         userName: currentUser.displayName || currentUser.email.split('@')[0],
         type: 'profit',
-        data: { mapato, gharama, faida },
-        result: faida >= 0 ? `Profit: TZS ${faida.toLocaleString()}` : `Loss: TZS ${Math.abs(faida).toLocaleString()}`,
+        data: { revenue, expenses, profit },
+        result: profit >= 0 ? `Profit: TZS ${profit.toLocaleString()}` : `Loss: TZS ${Math.abs(profit).toLocaleString()}`,
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
     };
     
@@ -70,19 +66,19 @@ window.saveProfitCalculation = async function() {
         const userRef = db.collection('users').doc(currentUser.uid);
         const userDoc = await userRef.get();
         const currentCount = userDoc.data()?.totalCalculations || 0;
-        const currentProfitSum = userDoc.data()?.totalProfit || 0;
+        const currentProfit = userDoc.data()?.totalProfit || 0;
         
         await userRef.update({ 
             totalCalculations: currentCount + 1,
-            totalProfit: currentProfitSum + (faida > 0 ? faida : 0)
+            totalProfit: currentProfit + (profit > 0 ? profit : 0)
         });
         
-        alert('✓ Profit/Loss calculation saved!');
+        alert('✓ Calculation saved!');
         loadUserActivities();
         updateUserStats();
     } catch (error) {
         console.error('Error saving profit:', error);
-        alert('❌ Error saving. Check your internet connection.');
+        alert('Error saving. Check console.');
     }
 };
 
@@ -114,7 +110,7 @@ window.saveLoanCalculation = async function() {
         userName: currentUser.displayName || currentUser.email.split('@')[0],
         type: 'loan',
         data: { amount, rate, months, monthlyPayment, totalPayment },
-        result: `Amount: TZS ${amount.toLocaleString()}, Monthly: TZS ${Math.round(monthlyPayment).toLocaleString()}, Total: TZS ${Math.round(totalPayment).toLocaleString()}`,
+        result: `Amount: TZS ${amount.toLocaleString()}, Monthly: TZS ${Math.round(monthlyPayment).toLocaleString()}`,
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
     };
     
@@ -124,11 +120,11 @@ window.saveLoanCalculation = async function() {
         const userRef = db.collection('users').doc(currentUser.uid);
         const userDoc = await userRef.get();
         const currentCount = userDoc.data()?.totalCalculations || 0;
-        const currentLoanCount = userDoc.data()?.totalLoans || 0;
+        const currentLoans = userDoc.data()?.totalLoans || 0;
         
         await userRef.update({ 
             totalCalculations: currentCount + 1,
-            totalLoans: currentLoanCount + 1
+            totalLoans: currentLoans + 1
         });
         
         alert('✓ Loan calculation saved!');
@@ -136,11 +132,11 @@ window.saveLoanCalculation = async function() {
         updateUserStats();
     } catch (error) {
         console.error('Error saving loan:', error);
-        alert('❌ Error saving. Check your internet connection.');
+        alert('Error saving. Check console.');
     }
 };
 
-// Load user's activities
+// Load user activities
 async function loadUserActivities() {
     if (!currentUser) return;
     
@@ -155,27 +151,20 @@ async function loadUserActivities() {
             .get();
         
         if (snapshot.empty) {
-            activitiesDiv.innerHTML = '<div class="empty-state"><i class="fas fa-folder-open"></i><p>No activities yet. Start calculating!</p></div>';
+            activitiesDiv.innerHTML = '<div class="empty-state"><i class="fas fa-folder-open"></i><p>No activities yet</p></div>';
             return;
         }
         
         let html = '';
         snapshot.forEach(doc => {
             const calc = doc.data();
-            let dateStr = 'Date unavailable';
+            let dateStr = 'Just now';
             if (calc.timestamp) {
                 const date = calc.timestamp.toDate();
-                dateStr = date.toLocaleString('en-US', { 
-                    month: 'short', 
-                    day: '2-digit', 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                });
+                dateStr = date.toLocaleString();
             }
-            
             const typeIcon = calc.type === 'profit' ? '📊' : '🏦';
             const typeName = calc.type === 'profit' ? 'Profit/Loss' : 'Loan';
-            
             html += `
                 <div class="activity-item">
                     <div class="activity-date">${typeIcon} ${dateStr}</div>
@@ -197,11 +186,10 @@ async function updateUserStats() {
     
     try {
         const userDoc = await db.collection('users').doc(currentUser.uid).get();
-        const userData = userDoc.data();
-        
-        document.getElementById('totalCalculations').innerText = userData?.totalCalculations || 0;
-        document.getElementById('totalProfit').innerText = `TZS ${(userData?.totalProfit || 0).toLocaleString()}`;
-        document.getElementById('totalLoans').innerText = userData?.totalLoans || 0;
+        const data = userDoc.data();
+        document.getElementById('totalCalculations').innerText = data?.totalCalculations || 0;
+        document.getElementById('totalProfit').innerText = `TZS ${(data?.totalProfit || 0).toLocaleString()}`;
+        document.getElementById('totalLoans').innerText = data?.totalLoans || 0;
     } catch (error) {
         console.error('Error loading stats:', error);
     }
@@ -210,13 +198,14 @@ async function updateUserStats() {
 // Load user info
 async function loadUserInfo() {
     if (!currentUser) return;
-    
-    const displayName = currentUser.displayName || currentUser.email.split('@')[0];
-    document.getElementById('userName').innerText = displayName;
+    const name = currentUser.displayName || currentUser.email.split('@')[0];
+    document.getElementById('userName').innerText = name;
 }
 
 // ==================== AUTH STATE LISTENER ====================
 auth.onAuthStateChanged(async (user) => {
+    console.log("Auth state changed:", user ? "User logged in" : "No user");
+    
     if (user) {
         currentUser = user;
         
@@ -243,33 +232,19 @@ auth.onAuthStateChanged(async (user) => {
         await loadUserActivities();
         await updateUserStats();
         
-        updateDashboardProfit();
-        updateDashboardLoan();
+        updateProfitDisplay();
+        updateLoanDisplay();
         
-        const mapatoInput = document.getElementById('dashboardMapato');
-        const gharamaInput = document.getElementById('dashboardGharama');
-        const loanAmountInput = document.getElementById('dashboardLoanAmount');
-        const interestRateInput = document.getElementById('dashboardInterestRate');
-        const loanMonthsInput = document.getElementById('dashboardLoanMonths');
-        
-        if (mapatoInput) mapatoInput.addEventListener('input', updateDashboardProfit);
-        if (gharamaInput) gharamaInput.addEventListener('input', updateDashboardProfit);
-        if (loanAmountInput) loanAmountInput.addEventListener('input', updateDashboardLoan);
-        if (interestRateInput) interestRateInput.addEventListener('input', updateDashboardLoan);
-        if (loanMonthsInput) loanMonthsInput.addEventListener('input', updateDashboardLoan);
+        document.getElementById('dashboardMapato').addEventListener('input', updateProfitDisplay);
+        document.getElementById('dashboardGharama').addEventListener('input', updateProfitDisplay);
+        document.getElementById('dashboardLoanAmount').addEventListener('input', updateLoanDisplay);
+        document.getElementById('dashboardInterestRate').addEventListener('input', updateLoanDisplay);
+        document.getElementById('dashboardLoanMonths').addEventListener('input', updateLoanDisplay);
         
     } else {
         currentUser = null;
         document.getElementById('authSection').style.display = 'block';
         document.getElementById('dashboardSection').style.display = 'none';
-        
-        showLogin();
+        showLoginForm();
     }
 });
-
-setTimeout(() => {
-    if (document.getElementById('dashboardMapato')) {
-        updateDashboardProfit();
-        updateDashboardLoan();
-    }
-}, 100);

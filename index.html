@@ -13,7 +13,7 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
-    <!-- CSS Custom (style.css iko kwenye root) -->
+    <!-- CSS Custom -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -58,16 +58,22 @@
                         <input type="password" id="loginPassword" placeholder="Password">
                     </div>
                     
-                    <div class="remember-group">
+                    <div class="remember-group" style="display: flex; justify-content: space-between; align-items: center;">
                         <label class="checkbox-container">
                             <input type="checkbox" id="rememberMe">
                             <span class="checkmark"></span>
                             Remember Me
                         </label>
+                        <a href="#" onclick="forgotPassword(); return false;" style="color: #2c3e50; font-size: 12px; text-decoration: none;">Forgot Password?</a>
                     </div>
                     
                     <button class="btn-login" onclick="loginUser()">
                         Login <i class="fas fa-arrow-right"></i>
+                    </button>
+                    
+                    <!-- Google Sign In Button -->
+                    <button class="btn-google" onclick="googleSignIn()">
+                        <i class="fab fa-google"></i> Sign in with Google
                     </button>
                     
                     <div class="register-link">
@@ -208,34 +214,4 @@
                     <div class="result-box">
                         <i class="fas fa-calculator"></i>
                         <div class="result-label">Monthly Payment</div>
-                        <div class="big-number" id="dashboardMonthlyPayment">TZS 0</div>
-                        <div class="small-text" id="dashboardTotalPayment"></div>
-                    </div>
-                    <button class="btn-save" onclick="saveLoanCalculation()">
-                        <i class="fas fa-save"></i> Save Calculation
-                    </button>
-                </div>
-                
-                <!-- Activities -->
-                <div class="card activities-card">
-                    <div class="card-header">
-                        <i class="fas fa-clock-rotate-left"></i>
-                        <h3>Recent Activities</h3>
-                    </div>
-                    <div id="activitiesList" class="activities-list">
-                        <div class="empty-state">
-                            <i class="fas fa-folder-open"></i>
-                            <p>No activities yet</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- JavaScript Files (ziko kwenye root, siyo folder js/) -->
-    <script src="firebase-config.js"></script>
-    <script src="auth.js"></script>
-    <script src="dashboard.js"></script>
-</body>
-</html>
+                        <div class="big-number" id="dashboardMonthlyPayment">TZS

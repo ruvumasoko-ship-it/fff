@@ -1,4 +1,4 @@
-// ==================== FIREBASE CONFIGURATION ====================
+// Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyB9Y1_F7hf5tdelpx-K-SUjTTZpkZrv2K4",
     authDomain: "biashararahisi-9947f.firebaseapp.com",
@@ -10,11 +10,11 @@ const firebaseConfig = {
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
-
-// Initialize services
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Enable persistence (keep user logged in)
+// Enable persistence
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
     .catch(error => console.error("Persistence error:", error));
+
+console.log("Firebase initialized successfully!");
